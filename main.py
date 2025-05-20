@@ -18,6 +18,7 @@ df = pd.DataFrame(readings)
 if 'df' not in st.session_state:
     st.session_state.df = df
 
+min_date = st.session_state.df['timestamp'].astype('datetime64[ns]').dt.date.min()
 
 st.subheader('Device Health')
 
@@ -25,14 +26,14 @@ if start_date := st.sidebar.date_input(
         label='Start date',
         value=datetime.today() - timedelta(days=1),
         max_value=datetime.today() - timedelta(days=1),
-        min_value=st.session_state.df['timestamp'].astype('datetime64[ns]').dt.date.min(),
+        min_value=min_date,
         key='start_date',
 ):
     end_date = st.sidebar.date_input(
         label='End date',
         value=datetime.today() - timedelta(days=1),
         max_value=datetime.today() - timedelta(days=1),
-        min_value=st.session_state.start_date,
+        min_value=min_date,
         key='end_date'
     )
 
@@ -41,6 +42,9 @@ if start_date := st.sidebar.date_input(
         start_date=st.session_state.start_date,
         end_date=st.session_state.end_date
     )
+    df_mapping = {k: v['dev_name'] for k, v in dp.DEV_MAPPING.items()}
+    dev_health['dev_eui'].replace(df_mapping, inplace=True)
+    dev_health.loc[dev_health['device_health'] > 100, 'device_health'] = 100
     st.table(
         data=dev_health.style.applymap(
             lambda x: "background-color: #fcb2a2"
@@ -48,11 +52,14 @@ if start_date := st.sidebar.date_input(
             else "background-color: white",
             subset=['device_health']),
     )
-    df_mapping = {k:v['dev_name'] for k, v in dp.DEV_MAPPING.items()}
+
     dev_health.replace(df_mapping, inplace=True)
     st.line_chart(dev_health, x='dev_eui')
+    st.download_button('Download', dev_health.to_csv(), file_name='device_health.csv', key='dev_health')
 
-    if dev_euis := st.sidebar.multiselect('Select device', dp.DEV_MAPPING.keys(), default=(9, 11)):
+    dev_names = list(v['dev_name'] for k, v in dp.DEV_MAPPING.items())
+    if selected_names := st.sidebar.multiselect('Select device', dev_names, default=dev_names[:1]):
+        dev_euis = [k for k, v in dp.DEV_MAPPING.items() if v['dev_name'] in selected_names]
         results, probe, sensor, humidity = dp.fetch_mean_readings(
             df=st.session_state.df,
             start_date=st.session_state.start_date,
@@ -62,20 +69,20 @@ if start_date := st.sidebar.date_input(
 
         st.subheader('Probe average')
         st.line_chart(probe, x='day')
+        st.download_button('Download', probe.to_csv(), file_name='probe.csv', key='probe')
 
         st.subheader('Sensor average')
         st.line_chart(sensor, x='day')
+        st.download_button('Download', sensor.to_csv(), file_name='sensor.csv', key='sensor')
 
         st.subheader('Humidity average')
         st.line_chart(humidity, x='day')
+        st.download_button('Download', humidity.to_csv(), file_name='humidity.csv', key='humidity')
 
         st.subheader('Probe vs sensor')
-        filter_on_dev_eui = st.selectbox('Select dev_eui', dev_euis)
-        if filter_on_dev_eui:
-            probe_vs_sensor = results.loc[results['dev_eui'] == filter_on_dev_eui]
+        if selected_name := st.selectbox('Select dev_eui', selected_names):
+            dev_eui = [k for k, v in dp.DEV_MAPPING.items() if v['dev_name'] == selected_name][0]
+            probe_vs_sensor = results.loc[results['dev_eui'] == dev_eui]
             probe_vs_sensor = probe_vs_sensor[['tempc_ds', 'tempc_sht', 'day']]
             st.line_chart(probe_vs_sensor, x='day')
-
-        buffered_file = BytesIO()
-        results.to_csv(buffered_file, index=False)
-        st.download_button(label='Download Results', data=buffered_file, file_name='results.csv')
+            st.download_button('Download', probe_vs_sensor.to_csv(), file_name='probe_vs_sensor.csv', key='probe_vs_sensor')

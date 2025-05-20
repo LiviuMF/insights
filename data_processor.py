@@ -17,7 +17,7 @@ for device in devices:
 
 def fetch_mean_readings(
         df,
-        dev_euis: tuple,
+        dev_euis: list,
         start_date=None,
         end_date=None,
 ):
@@ -62,6 +62,14 @@ def fetch_mean_readings(
         split_on='dev_eui',
         use_values_from_col='humidity_mean'
     )
+
+    df_mapping = {k: v['dev_name'] for k, v in DEV_MAPPING.items()}
+    for df in [df_mean, probe, sensor, humidity]:
+        df_columns = list(df.columns)
+        for index, col in enumerate(df.columns, start=0):
+            if col in df_mapping.keys():
+                df_columns[index] = df_mapping[col]
+        df.columns = df_columns
     return df_mean, probe, sensor, humidity
 
 
@@ -88,18 +96,20 @@ def transform_df_rows_to_cols(
 def remove_outliers_from_df_col(df: pd.DataFrame, col_name: str, dev_euis: list[str]):
     all_dfs = []
     for dev_eui in dev_euis:
-        temp_limit = DEV_MAPPING[dev_eui]['dev_normal_temp']
+        temp_limit = DEV_MAPPING[dev_eui]['dev_max_accepted_temp']
 
         current_df = df.loc[df['dev_eui'] == dev_eui]
 
         # filter outliers based on the given temperature limit
-        outlier_df = current_df.loc[current_df[col_name].apply(lambda x: abs(x - float(temp_limit)) <= 4)]
-        mean = outlier_df[col_name].abs().mean()
+        outlier_df = current_df.loc[current_df[col_name] > temp_limit]
+        if outlier_df.empty:
+            mean = outlier_df[col_name].mean()
 
-        # replace outliers with mean
-        current_df.loc[
-            current_df[col_name].apply(lambda x: abs(x - float(temp_limit)) >= 4),
-            col_name] = mean
+            # replace outliers with mean
+            current_df.loc[
+                current_df[col_name] > temp_limit,
+                col_name] = mean
+
         all_dfs.append(current_df)
 
     return pd.concat(all_dfs)
