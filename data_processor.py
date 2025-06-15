@@ -1,23 +1,10 @@
 import pandas as pd
-import requests
-
-import config
-
-
-
-devices = requests.get(
-    f'{config.API_URL}/devices/',
-    auth=(config.API_USERNAME, config.API_PASSWORD),
-).json()['results']
-
-DEV_MAPPING = {}
-for device in devices:
-    DEV_MAPPING[device['id']] = {k:v for k, v in device.items()}
 
 
 def fetch_mean_readings(
         df,
         dev_euis: list,
+        name_mapping: dict,
         start_date=None,
         end_date=None,
 ):
@@ -35,7 +22,12 @@ def fetch_mean_readings(
     df_mean['tempc_sht'] = df_mean['tempc_sht'].astype('float')
     df_mean['hum_sht'] = df_mean['hum_sht'].astype('float')
 
-    df_mean = remove_outliers_from_df_col(df_mean, 'tempc_ds', dev_euis)
+    df_mean = remove_outliers_from_df_col(
+        df=df_mean,
+        col_name='tempc_ds',
+        dev_euis=dev_euis,
+        name_mapping=name_mapping
+    )
 
     df_mean['probe_mean'] = df_mean.groupby(['dev_eui', 'day'])['tempc_ds'].transform('mean')
     df_mean['mean_of_probe_mean'] = df_mean.groupby('dev_eui')['probe_mean'].transform('mean')
@@ -63,7 +55,7 @@ def fetch_mean_readings(
         use_values_from_col='humidity_mean'
     )
 
-    df_mapping = {k: v['dev_name'] for k, v in DEV_MAPPING.items()}
+    df_mapping = {k: v['dev_name'] for k, v in name_mapping.items()}
     for df in [df_mean, probe, sensor, humidity]:
         df_columns = list(df.columns)
         for index, col in enumerate(df.columns, start=0):
@@ -93,10 +85,15 @@ def transform_df_rows_to_cols(
     return master_df
 
 
-def remove_outliers_from_df_col(df: pd.DataFrame, col_name: str, dev_euis: list[str]):
+def remove_outliers_from_df_col(
+        df: pd.DataFrame,
+        col_name: str,
+        dev_euis: list[str],
+        name_mapping: dict,
+):
     all_dfs = []
     for dev_eui in dev_euis:
-        temp_limit = DEV_MAPPING[dev_eui]['dev_max_accepted_temp']
+        temp_limit = name_mapping[dev_eui]['dev_max_accepted_temp']
 
         current_df = df.loc[df['dev_eui'] == dev_eui]
 
