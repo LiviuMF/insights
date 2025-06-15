@@ -1,8 +1,19 @@
-import os
-from dotenv import load_dotenv
+import requests
+import streamlit as st
 
-load_dotenv()
+import config
 
-API_USERNAME = os.environ.get('API_USERNAME')
-API_PASSWORD = os.environ.get('API_PASSWORD')
-API_URL = os.environ.get('API_URL')
+
+def authenticate(credentials: tuple):
+    username, password = credentials
+    response = requests.get(
+        f'{config.API_URL}/readings/?limit=10000',
+        auth=(username, password)
+    )
+    if response.status_code != 200:
+        st.error('Wrong username or password')
+        return False
+
+    st.session_state['is_authenticated'] = True
+    st.success('Authentication successful!')
+    return True
