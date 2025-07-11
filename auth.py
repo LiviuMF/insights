@@ -11,9 +11,9 @@ def authenticate(credentials: tuple):
         auth=(username, password)
     )
     if response.status_code != 200:
-        st.error('Wrong username or password')
+        st.error('User sau parola gresita')
         return False
 
     st.session_state['is_authenticated'] = True
-    st.success('Authentication successful!')
+    st.success('Autentificare reusita!')
     return True
