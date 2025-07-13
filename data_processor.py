@@ -36,14 +36,14 @@ def fetch_mean_readings(
         name_mapping=name_mapping
     )
 
-    df_mean['probe_mean'] = df_mean.groupby(['dev_eui', 'day'])['tempc_ds'].transform('mean')
-    df_mean['mean_of_probe_mean'] = df_mean.groupby('dev_eui')['probe_mean'].transform('mean')
+    df_mean['probe_mean'] = df_mean.groupby(['dev_eui', 'day'])['tempc_ds'].transform('mean').apply(lambda x: round(x,2))
+    df_mean['mean_of_probe_mean'] = df_mean.groupby('dev_eui')['probe_mean'].transform('mean').apply(lambda x: round(x,2))
 
-    df_mean['sensor_mean'] = df_mean.groupby(['dev_eui', 'day'])['tempc_sht'].transform('mean')
-    df_mean['mean_of_sensor_mean'] = df_mean.groupby('dev_eui')['sensor_mean'].transform('mean')
+    df_mean['sensor_mean'] = df_mean.groupby(['dev_eui', 'day'])['tempc_sht'].transform('mean').apply(lambda x: round(x,2))
+    df_mean['mean_of_sensor_mean'] = df_mean.groupby('dev_eui')['sensor_mean'].transform('mean').apply(lambda x: round(x,2))
 
-    df_mean['humidity_mean'] = df_mean.groupby(['dev_eui', 'day'])['hum_sht'].transform('mean')
-    df_mean['mean_of_humidity_mean'] = df_mean.groupby('dev_eui')['humidity_mean'].transform('mean')
+    df_mean['humidity_mean'] = df_mean.groupby(['dev_eui', 'day'])['hum_sht'].transform('mean').apply(lambda x: round(x,2))
+    df_mean['mean_of_humidity_mean'] = df_mean.groupby('dev_eui')['humidity_mean'].transform('mean').apply(lambda x: round(x,2))
 
     df_mean.drop_duplicates(subset=['day', 'dev_eui'], keep='first', inplace=True)
     probe = transform_df_rows_to_cols(
