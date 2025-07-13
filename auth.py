@@ -7,7 +7,7 @@ import config
 def authenticate(credentials: tuple):
     username, password = credentials
     response = requests.get(
-        f'{config.API_URL}/readings/?limit=10000',
+        f'{config.API_URL}/devices/',
         auth=(username, password)
     )
     if response.status_code != 200:

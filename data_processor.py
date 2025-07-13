@@ -1,4 +1,11 @@
 import pandas as pd
+import requests
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import lru_cache
+from io import BytesIO
+
+import config
 
 
 def fetch_mean_readings(
@@ -138,3 +145,69 @@ def calculate_device_health(df, start_date=None, end_date=None):
     df_dh.sort_values(by='device_health', inplace=True)
     df_dh['limit (80%)'] = 80
     return df_dh[['dev_eui', 'device_health', 'limit (80%)']]
+
+
+@lru_cache(maxsize=100)
+def fetch_readings_for_offset(
+        offset: str,
+        start_date: str,
+        end_date: str,
+        username: str,
+        password: str
+) -> requests.Response:
+    return requests.get(
+        url=f'{config.API_URL}/readings/',
+        params={
+            'limit': 1000,
+            'offset': offset,
+            'start_date': start_date,
+            'end_date': end_date
+        },
+        auth=(username, password)
+    )
+
+
+@lru_cache(maxsize=100)
+def fetch_all_readings(
+        start_date,
+        end_date,
+        username,
+        password,
+        limit=1000,
+        max_workers=10
+):
+    response = fetch_readings_for_offset(
+        0,
+        start_date,
+        end_date,
+        username,
+        password
+    )
+    total_items = response.json()['count']
+    results = response.json()['results']
+    offsets = [i for i in range(limit, total_items, limit)]
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_offset = {
+            executor.submit(
+                fetch_readings_for_offset, offset, start_date, end_date, username, password
+            ): offset
+            for offset in offsets
+        }
+        for future in as_completed(future_to_offset):
+            offset = future_to_offset[future]
+            try:
+                data = future.result().json()['results']
+                results.extend(data)
+            except Exception as e:
+                print(f"Request failed at offset {offset}: {e}")
+
+    return results
+
+
+def to_excel_bytes(df, title):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
+    output.seek(0)
+    return output

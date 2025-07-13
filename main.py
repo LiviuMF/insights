@@ -41,31 +41,34 @@ if st.session_state['is_authenticated']:
     for device in devices:
         DEV_MAPPING[device['id']] = {k: v for k, v in device.items()}
 
-    readings = requests.get(
-        f'{config.API_URL}/readings/?limit=1000',
-        auth=(st.session_state['username'], st.session_state['password'])
-    ).json()['results']
-
-    df = pd.DataFrame(readings)
-    if 'df' not in st.session_state:
-        st.session_state.df = df
-
-    min_date = st.session_state.df['timestamp'].astype('datetime64[ns]').dt.date.min()
+    if 'min_value' not in st.session_state:
+        st.session_state['min_value'] = datetime.today() - timedelta(days=7)
 
     if start_date := st.sidebar.date_input(
             label='Data inceput',
-            value=datetime.today() - timedelta(days=5),
+            value=datetime.today() - timedelta(days=7),
             max_value=datetime.today() - timedelta(days=1),
-            min_value=min_date,
             key='start_date',
     ):
         end_date = st.sidebar.date_input(
             label='Data sfarsit',
             value=datetime.today() - timedelta(days=1),
             max_value=datetime.today() - timedelta(days=1),
-            min_value=min_date,
             key='end_date'
         )
+
+        all_readings = dp.fetch_all_readings(
+            start_date,
+            end_date,
+            st.session_state['username'],
+            st.session_state['password'],
+            1000
+        )
+
+        if 'df' not in st.session_state:
+            df = pd.DataFrame(all_readings)
+            st.session_state['df'] = df
+            st.session_state.min_value = df.timestamp.min()
 
         dev_names = list(v['dev_name'] for k, v in DEV_MAPPING.items())
         if selected_names := st.sidebar.multiselect('Selecteaza dispozitiv', dev_names, default=dev_names[:1]):
@@ -80,15 +83,15 @@ if st.session_state['is_authenticated']:
 
             st.subheader('Temperatura medie sonda')
             st.line_chart(probe, x='day')
-            st.download_button('Descarca', probe.to_csv(), file_name='probe.csv', key='probe')
+            st.download_button('Descarca', dp.to_excel_bytes(probe, 'sonda'), file_name='sonda.xlsx', key='probe')
 
             st.subheader('Temperatura medie senzor')
             st.line_chart(sensor, x='day')
-            st.download_button('Descarca', sensor.to_csv(), file_name='sensor.csv', key='sensor')
-
+            st.download_button('Descarca', dp.to_excel_bytes(sensor, 'senzor'), file_name='senzor.xlsx', key='sensor')
+            #
             st.subheader('Umiditate medie senzor')
             st.line_chart(humidity, x='day')
-            st.download_button('Descarca', humidity.to_csv(), file_name='humidity.csv', key='humidity')
+            st.download_button('Descarca', dp.to_excel_bytes(humidity, 'umiditate'), file_name='umiditate.xlsx', key='humidity')
 
             st.subheader('Sonda vs Senzor')
             if selected_name := st.selectbox('Select dev_eui', selected_names):
@@ -96,7 +99,7 @@ if st.session_state['is_authenticated']:
                 probe_vs_sensor = results.loc[results['dev_eui'] == dev_eui]
                 probe_vs_sensor = probe_vs_sensor[['tempc_ds', 'tempc_sht', 'day']]
                 st.line_chart(probe_vs_sensor, x='day')
-                st.download_button('Descarca', probe_vs_sensor.to_csv(), file_name='probe_vs_sensor.csv', key='probe_vs_sensor')
+                st.download_button('Descarca', dp.to_excel_bytes(probe_vs_sensor, 'sonda_vs_senzor'), file_name='sonda_vs_senzor.xlsx', key='probe_vs_sensor')
 
             st.subheader('Sanatate dispozitiv')
 
@@ -119,7 +122,6 @@ if st.session_state['is_authenticated']:
 
             dev_health.replace(df_mapping, inplace=True)
             st.line_chart(dev_health, x='dev_eui')
-            st.download_button('Descarca', dev_health.to_csv(), file_name='device_health.csv', key='dev_health')
 
 
 st.write('''<style>
@@ -127,10 +129,3 @@ st.write('''<style>
         display: None;
     }        
     </style>''', unsafe_allow_html=True)
-
-
-# TODO give more values through the API, to filter by date any period
-# transalate to romanian
-# implement pdf download for any download button to download either a jpg or pdf image of the table / graph etc
-# make it redundant so it won't quit or fail
-# make script for deployments pulling from github
