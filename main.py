@@ -9,6 +9,13 @@ import config
 import data_processor as dp
 
 
+st.write('''<style>
+    .stAppToolbar { 
+        display: None;
+    }        
+    </style>''', unsafe_allow_html=True)
+
+
 if 'is_authenticated' not in st.session_state:
     st.session_state['is_authenticated'] = False
 if 'username' not in st.session_state:
@@ -122,10 +129,3 @@ if st.session_state['is_authenticated']:
 
             dev_health.replace(df_mapping, inplace=True)
             st.line_chart(dev_health, x='dev_eui')
-
-
-st.write('''<style>
-    .stAppToolbar { 
-        display: None;
-    }        
-    </style>''', unsafe_allow_html=True)
