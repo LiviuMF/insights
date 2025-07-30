@@ -147,7 +147,7 @@ def calculate_device_health(df, start_date=None, end_date=None):
     return df_dh[['dev_eui', 'device_health', 'limit (80%)']]
 
 
-@lru_cache(maxsize=100)
+@lru_cache
 def fetch_readings_for_offset(
         offset: str,
         start_date: str,
@@ -156,7 +156,7 @@ def fetch_readings_for_offset(
         password: str
 ) -> requests.Response:
     return requests.get(
-        url=f'{config.API_URL}/readings/',
+        url=f'{config.API_URL}/api/readings/',
         params={
             'limit': 1000,
             'offset': offset,
@@ -167,7 +167,7 @@ def fetch_readings_for_offset(
     )
 
 
-@lru_cache(maxsize=100)
+@lru_cache
 def fetch_all_readings(
         start_date,
         end_date,

@@ -38,7 +38,7 @@ if not st.session_state['is_authenticated']:
 
 if st.session_state['is_authenticated']:
     devices = requests.get(
-        f'{config.API_URL}/devices/',
+        f'{config.API_URL}/api/devices/',
         auth=(
             st.session_state['username'],
             st.session_state['password']
