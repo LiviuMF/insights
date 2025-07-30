@@ -7,7 +7,7 @@ import config
 def authenticate(credentials: tuple):
     username, password = credentials
     response = requests.post(
-        f'{config.API_URL}/api/login/',
+        f'{config.API_URL}/login/',
         auth=(username, password)
     )
     if response.status_code != 200:
