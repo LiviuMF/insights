@@ -211,3 +211,19 @@ def to_excel_bytes(df, title):
         df.to_excel(writer, index=False, sheet_name='Sheet1')
     output.seek(0)
     return output
+
+
+def update_device_by_id(
+        device_data: dict,
+        device_id: str,
+        username: str,
+        password: str
+) -> None:
+    try:
+        requests.patch(
+            url=f'{config.API_URL}/api/devices/{device_id}/',
+            auth=(username, password),
+            data=device_data
+        )
+    except Exception as e:
+        raise e

@@ -79,6 +79,32 @@ if st.session_state['is_authenticated']:
 
         dev_names = list(v['dev_name'] for k, v in DEV_MAPPING.items())
         if selected_names := st.sidebar.multiselect('Selecteaza dispozitiv', dev_names, default=dev_names[:1]):
+            unique_key=0
+            new_temp_limits = {}
+            if checkbox := st.sidebar.checkbox('Modificare limite'):
+                if not st.session_state.get('pressed'):
+                    st.session_state['pressed'] = True
+            if not checkbox:
+                    st.session_state['pressed'] = False
+            if st.session_state.get('pressed'):
+                for key, dev_data in DEV_MAPPING.items():
+                    st.sidebar.text(f'Modificati limita pentru {dev_data["dev_name"]}')
+                    temp_limit = st.sidebar.text_input(f'Limita curenta: {dev_data["dev_max_accepted_temp"]}', key=unique_key)
+                    unique_key+=1
+                    new_temp_limits[key] = temp_limit
+                if st.sidebar.button('Salveaza modificari'):
+                    for dev_id, temp_limit  in new_temp_limits.items():
+                        if temp_limit:
+                            dp.update_device_by_id(
+                                device_data={
+                                    'dev_max_accepted_temp': temp_limit
+                                },
+                                device_id=dev_id,
+                                username=st.session_state['username'],
+                                password=st.session_state['password']
+                            )
+                    st.sidebar.success('Modificari salvate cu succes!')
+
             dev_euis = [k for k, v in DEV_MAPPING.items() if v['dev_name'] in selected_names]
             results, probe, sensor, humidity = dp.fetch_mean_readings(
                 df=st.session_state.df,
