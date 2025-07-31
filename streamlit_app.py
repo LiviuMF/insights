@@ -32,12 +32,12 @@ if 'password' not in st.session_state:
 
 
 if not st.session_state['is_authenticated']:
-    username = st.text_input('Utilizator')
+    username = st.text_input('Utilizator').lower()
     password = st.text_input('Parola', type='password')
     if st.button('Login'):
-        st.session_state['username'] = username.lower()
+        st.session_state['username'] = username
         st.session_state['password'] = password
-        authenticate((username.lower(), password))
+        authenticate((username, password))
 
     if st.session_state['is_authenticated']:
         st.rerun()
