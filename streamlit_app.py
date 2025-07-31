@@ -89,7 +89,7 @@ if st.session_state['is_authenticated']:
             if st.session_state.get('pressed'):
                 for key, dev_data in DEV_MAPPING.items():
                     st.sidebar.text(f'Modificati limita pentru {dev_data["dev_name"]}')
-                    temp_limit = st.sidebar.text_input(f'Limita curenta: {dev_data["dev_max_accepted_temp"]}', key=unique_key)
+                    temp_limit = st.sidebar.text_input(f'Limita actuala: {dev_data["dev_max_accepted_temp"]}', key=unique_key)
                     unique_key+=1
                     new_temp_limits[key] = temp_limit
                 if st.sidebar.button('Salveaza modificari'):
