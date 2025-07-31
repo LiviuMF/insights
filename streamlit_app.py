@@ -35,9 +35,9 @@ if not st.session_state['is_authenticated']:
     username = st.text_input('Utilizator')
     password = st.text_input('Parola', type='password')
     if st.button('Login'):
-        st.session_state['username'] = username
+        st.session_state['username'] = username.lower()
         st.session_state['password'] = password
-        authenticate((username, password))
+        authenticate((username.lower(), password))
 
     if st.session_state['is_authenticated']:
         st.rerun()
@@ -157,8 +157,10 @@ if st.session_state['is_authenticated']:
             df_mapping = {k: v['dev_name'] for k, v in DEV_MAPPING.items()}
             dev_health['dev_eui'].replace(df_mapping, inplace=True)
             dev_health.loc[dev_health['device_health'] > 100, 'device_health'] = 100
+            df_table = dev_health
             dev_health.set_index('dev_eui')
             dev_health.columns = ['Dispozitiv', 'Raport sanatate', 'limita (80%)']
+            dev_health.set_index('Dispozitiv', inplace=True)
             st.table(
                 data=dev_health.style.applymap(
                     lambda x: "background-color: #fcb2a2"
@@ -166,6 +168,5 @@ if st.session_state['is_authenticated']:
                     else "background-color: white",
                     subset=['Raport sanatate']),
             )
-
             dev_health.replace(df_mapping, inplace=True)
-            st.line_chart(dev_health, x='Dispozitiv')
+            st.line_chart(df_table)
