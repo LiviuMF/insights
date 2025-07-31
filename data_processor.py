@@ -140,7 +140,7 @@ def calculate_device_health(df, start_date=None, end_date=None):
     df_dh['reading_count'] = df_dh.groupby('dev_eui')['dev_eui'].transform('count')
 
     # calculate device health
-    df_dh['device_health'] = df_dh['reading_count'] / possible_readings * 100
+    df_dh['device_health'] = df_dh['reading_count'].apply(lambda x: round(x / possible_readings * 100))
     df_dh.drop_duplicates(subset=['dev_eui'], keep='first', inplace=True)
     df_dh.sort_values(by='device_health', inplace=True)
     df_dh['limit (80%)'] = 80

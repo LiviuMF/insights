@@ -96,23 +96,27 @@ if st.session_state['is_authenticated']:
                     st.session_state['pressed'] = False
             if st.session_state.get('pressed'):
                 for key, dev_data in DEV_MAPPING.items():
-                    st.sidebar.text(f'Modificati limita pentru {dev_data["dev_name"]}')
-                    temp_limit = st.sidebar.text_input(f'Limita actuala: {dev_data["dev_max_accepted_temp"]}', key=unique_key)
-                    unique_key+=1
-                    new_temp_limits[key] = temp_limit
+                    if dev_data['dev_name'] in selected_names:
+                        st.sidebar.text(f'Modificati limita pentru {dev_data["dev_name"]}')
+                        temp_limit = st.sidebar.text_input(label='', label_visibility='collapsed', key=unique_key, placeholder=f'Valoare actuala: {dev_data["dev_max_accepted_temp"]}')
+                        unique_key+=1
+                        new_temp_limits[key] = temp_limit
                 if st.sidebar.button('Salveaza modificari'):
-                    for dev_id, temp_limit  in new_temp_limits.items():
+                    for dev_id, temp_limit in new_temp_limits.items():
                         if temp_limit:
-                            dp.update_device_by_id(
-                                device_data={
-                                    'dev_max_accepted_temp': temp_limit
-                                },
-                                device_id=dev_id,
-                                username=st.session_state['username'],
-                                password=st.session_state['password']
-                            )
-                    st.sidebar.success('Modificari salvate cu succes!')
-                    st.session_state['pressed'] = False
+                            try:
+                                float(temp_limit)
+                                dp.update_device_by_id(
+                                    device_data={
+                                        'dev_max_accepted_temp': temp_limit
+                                    },
+                                    device_id=dev_id,
+                                    username=st.session_state['username'],
+                                    password=st.session_state['password']
+                                )
+                                st.sidebar.success('Modificari salvate cu succes!')
+                            except:
+                                st.sidebar.warning(f'Valoarea {temp_limit} trebuie sa fie un numar')
 
             dev_euis = [k for k, v in DEV_MAPPING.items() if v['dev_name'] in selected_names]
             results, probe, sensor, humidity = dp.fetch_mean_readings(
@@ -136,7 +140,7 @@ if st.session_state['is_authenticated']:
             st.download_button('Descarca', dp.to_excel_bytes(humidity, 'umiditate'), file_name='umiditate.xlsx', key='humidity')
 
             st.subheader('Sonda vs Senzor')
-            if selected_name := st.selectbox('Select dev_eui', selected_names):
+            if selected_name := st.selectbox('Selecteaza dispozitiv', selected_names):
                 dev_eui = [k for k, v in DEV_MAPPING.items() if v['dev_name'] == selected_name][0]
                 probe_vs_sensor = results.loc[results['dev_eui'] == dev_eui]
                 probe_vs_sensor = probe_vs_sensor[['tempc_ds', 'tempc_sht', 'day']]
@@ -153,14 +157,15 @@ if st.session_state['is_authenticated']:
             df_mapping = {k: v['dev_name'] for k, v in DEV_MAPPING.items()}
             dev_health['dev_eui'].replace(df_mapping, inplace=True)
             dev_health.loc[dev_health['device_health'] > 100, 'device_health'] = 100
-
+            dev_health.set_index('dev_eui')
+            dev_health.columns = ['Dispozitiv', 'Raport sanatate', 'limita (80%)']
             st.table(
                 data=dev_health.style.applymap(
                     lambda x: "background-color: #fcb2a2"
                     if x < 80.0
                     else "background-color: white",
-                    subset=['device_health']),
+                    subset=['Raport sanatate']),
             )
 
             dev_health.replace(df_mapping, inplace=True)
-            st.line_chart(dev_health, x='dev_eui')
+            st.line_chart(dev_health, x='Dispozitiv')
