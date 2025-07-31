@@ -10,9 +10,9 @@ import data_processor as dp
 
 
 st.write('''<style>
-    .stAppToolbar { 
+    .stAppDeployButton, #MainMenu{
         display: None;
-    }        
+    }
     </style>''', unsafe_allow_html=True)
 
 
@@ -104,6 +104,7 @@ if st.session_state['is_authenticated']:
                                 password=st.session_state['password']
                             )
                     st.sidebar.success('Modificari salvate cu succes!')
+                    st.session_state['pressed'] = False
 
             dev_euis = [k for k, v in DEV_MAPPING.items() if v['dev_name'] in selected_names]
             results, probe, sensor, humidity = dp.fetch_mean_readings(
