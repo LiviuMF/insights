@@ -13,6 +13,13 @@ st.write('''<style>
     .stAppDeployButton, #MainMenu{
         display: None;
     }
+    
+    .stImage {
+      position: fixed;
+      top: 40px;
+      right: 40px;
+      z-index: 999999 !important;
+    }
     </style>''', unsafe_allow_html=True)
 
 
@@ -44,6 +51,7 @@ if st.session_state['is_authenticated']:
             st.session_state['password']
         )).json()['results']
 
+    st.image('media/lemongras.png', width=80)
     DEV_MAPPING = {}
     for device in devices:
         DEV_MAPPING[device['id']] = {k: v for k, v in device.items()}
