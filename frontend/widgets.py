@@ -46,17 +46,10 @@ def load_haccp_report() -> None:
     reports = report_response.json()['results']
     col_widths = [2.5, 4, 6, 6]
 
+    st.subheader('Generare raport HACCP')
     if reports:
-        st.subheader('Generare raport HACCP')
-
         report_summary = dp.build_report_summary(reports)
         st.text(report_summary)
-
-        header_time, header_temp, header_reason, header_action = st.columns(col_widths)
-        header_time.text('Ora')
-        header_temp.text('Temperatura')
-        header_reason.text('Abatere')
-        header_action.text('Actiune')
 
         archived_report = dp.load_archived_report(col_widths, reports)
         data_for_download = reports[0]['report_data']

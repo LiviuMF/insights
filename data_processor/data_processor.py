@@ -175,7 +175,12 @@ def generate_pdf(
         cool_type
         for cool_type, temp_limits in config.COOLING_MAPPER.items()
         if temp_limits == dev_limits
-    ][0]
+    ]
+    if cooling_type:
+        cooling_type = cooling_type[0]
+    else:
+        cooling_type = list(config.COOLING_MAPPER.keys())[0]
+
     color = (0, 0, 0) # black
     font_size = 12
     left_margin = 84
@@ -230,6 +235,12 @@ def generate_pdf(
 
 
 def load_archived_report(col_widths, report_data):
+    header_time, header_temp, header_reason, header_action = st.columns(col_widths)
+    header_time.text('Ora')
+    header_temp.text('Temperatura')
+    header_reason.text('Abatere')
+    header_action.text('Actiune')
+
     mapping = st.session_state['dev_name_mapping']
     device = st.session_state['selected_device']
     dev_max_limit = mapping[device]['dev_max_accepted_temp']
