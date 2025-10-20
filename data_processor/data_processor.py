@@ -7,7 +7,6 @@ from dateutil.parser import parse
 from io import BytesIO
 
 import config
-from utils import save_to_session_state
 
 
 def remove_duplicates_by_hour(df: pd.DataFrame) -> pd.DataFrame:
@@ -200,7 +199,7 @@ def generate_pdf(
     min_temp, max_temp = dev_limits
     temp_limits_text = f'{min_temp}..{max_temp}' if not cooling_type == 'congelare' else min_temp
     page.insert_text((left_margin + 23, 94), f'{temp_limits_text}', fontsize=font_size, color=color)
-    page.insert_text((left_margin + 402, 94), cooling_type, fontsize=font_size, color=color)
+    page.insert_text((left_margin + 300, 94), cooling_type, fontsize=font_size, color=color)
     page.insert_text((left_margin + 355, 745), first_last_name, fontsize=font_size, color=color)
     page.insert_text((left_margin + 355, 764), report_date, fontsize=font_size, color=color)
 
