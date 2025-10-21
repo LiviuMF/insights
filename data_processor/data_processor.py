@@ -80,10 +80,10 @@ def build_report_summary(
     all_actions = set(x[3] for x in report_data if x[2] != 'fara actiune')
 
     return (
-        f"În data de {report_date}, {deviation_message}, "
-        f"dintre care {','.join(deviation_group_sizes)} consecutive în intervalele orare {', '.join(deviation_intervals)}"
-        f" cu următoarele cauze: {', '.join(all_reasons)}, pentru care s-au aplicat "
-        f"următoarele acțiuni corective: {', '.join(all_actions)}"
+        f"In data de {report_date}, {deviation_message}, "
+        f"dintre care {','.join(deviation_group_sizes)} consecutive in intervalele orare {', '.join(deviation_intervals)}"
+        f" cu urmatoarele cauze: {', '.join(all_reasons)}, pentru care s-au aplicat "
+        f"urmatoarele actiuni corective: {', '.join(all_actions)}"
     )
 
 
@@ -92,6 +92,7 @@ def generate_pdf(
         owner_data: dict,
         user_data: dict,
         report_date: str,
+        report_summary: str,
         dev_limits: list
 ):
     first_last_name = f'{user_data["first_name"]} {user_data["last_name"]}'
@@ -110,6 +111,24 @@ def generate_pdf(
     font_size = 12
     left_margin = 84
     page = template_pdf[0]
+    page.insert_text(
+        (left_margin - 65, 130),
+        report_summary.split('in intervalele')[0],
+        fontsize=font_size,
+        color=color
+    )
+    page.insert_text(
+        (left_margin - 68, 145),
+        report_summary.split('consecutive')[1].split('pentru care')[0],
+        fontsize=font_size,
+        color=color
+    )
+    page.insert_text(
+        (left_margin - 65, 160),
+        f'pentru care {report_summary.split('pentru care')[1]}',
+        fontsize=font_size,
+        color=color
+    )
     page.insert_text(
         (left_margin + 94, 63),
         f"{owner_data['name']} {owner_data['owner_legal_id']} / {owner_data['ansvsa']}",
