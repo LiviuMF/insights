@@ -111,24 +111,26 @@ def generate_pdf(
     font_size = 12
     left_margin = 84
     page = template_pdf[0]
-    page.insert_text(
-        (left_margin - 65, 130),
-        report_summary.split('in intervalele')[0],
-        fontsize=font_size,
-        color=color
-    )
-    page.insert_text(
-        (left_margin - 68, 145),
-        report_summary.split('consecutive')[1].split('pentru care')[0],
-        fontsize=font_size,
-        color=color
-    )
-    page.insert_text(
-        (left_margin - 65, 160),
-        f'pentru care {report_summary.split('pentru care')[1]}',
-        fontsize=font_size,
-        color=color
-    )
+
+    if report_summary:
+        page.insert_text(
+            (left_margin - 65, 130),
+            report_summary.split('in intervalele')[0],
+            fontsize=font_size,
+            color=color
+        )
+        page.insert_text(
+            (left_margin - 68, 145),
+            report_summary.split('consecutive')[1].split('pentru care')[0],
+            fontsize=font_size,
+            color=color
+        )
+        page.insert_text(
+            (left_margin - 65, 160),
+            f'pentru care {report_summary.split('pentru care')[1]}',
+            fontsize=font_size,
+            color=color
+        )
     page.insert_text(
         (left_margin + 94, 63),
         f"{owner_data['name']} {owner_data['owner_legal_id']} / {owner_data['ansvsa']}",

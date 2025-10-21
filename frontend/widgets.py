@@ -47,6 +47,7 @@ def load_haccp_report() -> None:
     col_widths = [2.5, 4, 6, 6]
 
     st.subheader('Generare raport HACCP')
+    report_summary = ''
     if reports:
         report_summary = dp.build_report_summary(reports)
         st.text(report_summary)
@@ -95,6 +96,7 @@ def load_haccp_report() -> None:
         st.session_state['owners'][0],
         st.session_state['user_data'],
         report_date_value,
+        report_summary,
         [dev_min_limit, dev_max_limit]
     )
     st.download_button(
