@@ -5,6 +5,7 @@ import streamlit as st
 
 from dateutil.parser import parse
 from io import BytesIO
+import itertools
 
 import config
 
@@ -13,53 +14,6 @@ def remove_duplicates_by_hour(df: pd.DataFrame) -> pd.DataFrame:
     df['hour'] = df['timestamp'].apply(lambda x: parse(x).hour)
     df.drop_duplicates(subset='hour', inplace=True, keep='first')
     return df
-
-
-def transform_df_rows_to_cols(
-        df: pd.DataFrame,
-        split_on: str,
-        use_values_from_col: str
-) -> pd.DataFrame:
-
-    df_sections = []
-    for dev_eui in sorted(df[split_on].unique(), key=lambda x: x):
-        current_df = df.loc[df[split_on] == dev_eui]
-        current_df[dev_eui] = current_df[use_values_from_col]
-        current_df = current_df[['day', dev_eui]]
-        df_sections.append(current_df)
-
-    master_df = df_sections[0]
-    for df_section in df_sections[1:]:
-        master_df = master_df.merge(df_section, left_on='day', right_on='day')
-
-    return master_df
-
-
-def remove_outliers_from_df_col(
-        df: pd.DataFrame,
-        col_name: str,
-        dev_euis: list[str],
-        name_mapping: dict,
-):
-    all_dfs = []
-    for dev_eui in dev_euis:
-        temp_limit = name_mapping[dev_eui]['dev_max_accepted_temp']
-
-        current_df = df.loc[df['dev_eui'] == dev_eui]
-
-        # filter outliers based on the given temperature limit
-        outlier_df = current_df.loc[current_df[col_name] > temp_limit]
-        if outlier_df.empty:
-            mean = outlier_df[col_name].mean()
-
-            # replace outliers with mean
-            current_df.loc[
-                current_df[col_name] > temp_limit,
-                col_name] = mean
-
-        all_dfs.append(current_df)
-
-    return pd.concat(all_dfs)
 
 
 def update_device_by_id(
@@ -82,82 +36,51 @@ def build_report_summary(
         report: list[dict]
 ) -> str:
     report_data = report[0]['report_data']
-    report_date = report[0]['date']
-    nr_of_deviations = 0
-    reasons = []
-    actions = []
-    consecutive_counter = 0
-    all_counters = []
-    hours = []
-    hour_interval = []
-    save_flag = False
-    for index, data in enumerate(report_data):
+    previous_hour_data = report_data[0]
+    consecutive_segment = []
+    all_hours = []
+    for index, data in enumerate(report_data[1:]):
         temp, time, deviation, action = data
-        if deviation != 'fara abatere':
-            nr_of_deviations += 1
-            reasons.append(deviation)
-            hour_interval.append(1)
-        if action != 'fara actiune':
-            actions.append(action)
-            hour_interval.append(0)
+        previous_hour = int(previous_hour_data[1].split(':')[0])
+        previous_deviation = previous_hour_data[2]
+        current_hour = int(time.split(':')[0])
+        if (
+                previous_hour - current_hour == 1 and
+                deviation != 'fara abatere' and
+                previous_deviation != 'fara abatere'
+        ):
+            consecutive_segment.extend([previous_hour_data, data])
+        else:
+            if consecutive_segment:
+                unique = list(k for k, _ in itertools.groupby(consecutive_segment))
+                all_hours.append(unique)
+                consecutive_segment = []
+        previous_hour_data = data
 
-        if index < len(report_data) - 1:
-            next_reason = report_data[index + 1][2]
 
-            if deviation != 'fara abatere' and next_reason != 'fara abatere':
-                consecutive_counter += 1
-                hours.append(time)
-            elif deviation != 'fara abatere' and next_reason == 'fara abatere':
-                hours.append(time)
-                consecutive_counter += 1
-                save_flag = True
-            elif deviation == 'fara abatere' and next_reason == 'fara abatere':
-                consecutive_counter = 0
-                all_counters.append(0)
-                hours.append('0')
-                save_flag = False
-            elif deviation == 'fara abatere' and next_reason != 'fara abatere':
-                consecutive_counter = 0
-                all_counters.append(0)
-                hours.append('0')
-                save_flag = False
-        if index == len(report_data) - 1:
-            if deviation == 'fara abatere':
-                all_counters.append(0)
-                hours.append('0')
-            else:
-                hours.append(time)
-                consecutive_counter += 1
-                all_counters.append(consecutive_counter)
+    if not all_hours:
+        all_hours = list(k for k, _ in itertools.groupby(consecutive_segment))
 
-        if save_flag and index != len(report_data) - 1:
-            all_counters.append(consecutive_counter)
-        elif save_flag and index == len(report_data):
-            all_counters.append(1)
-
-    all_reasons = ', '.join(set(reasons))
-    all_actions = ', '.join(set(actions))
-
-    consecutive_deviations = [str(dev) for dev in all_counters if dev > 1]
-    consecutive_deviations.sort()
-
-    deviation_interval = []
-    for index, hour in enumerate(hour_interval):
-        if index < len(all_counters):
-            counter_value = all_counters[index]
-            if hour == 1 and counter_value > 1:
-                interval_hours = hours[index:index + counter_value]
-                if '0' in interval_hours:
-                    interval_hours.remove('0')
-                end_interval = interval_hours[0].split(':')[0]
-                start_interval = interval_hours[-1].split(':')[0]
-                deviation_interval.append(f'{start_interval} <-> {end_interval}')
+    report_date = report[0]['date']
+    nr_of_deviations = len([x for x in report_data if x[2] != 'fara abatere'])
+    deviation_message = (
+        f's-au constatat {nr_of_deviations} abateri'
+        if nr_of_deviations > 1
+        else 's-a constatat o abatere'
+    )
+    all_reasons = set(x[2] for x in report_data if x[2] != 'fara abatere')
+    all_actions = set(x[3] for x in report_data if x[2] != 'fara actiune')
+    deviation_group_sizes = [str(len(d)) for d in all_hours]
+    deviation_intervals = [
+        f'{d[0][1].split(':')[0]} <-> {d[-1][1].split(':')[0]}' 
+        for d in all_hours
+    ]
 
     return (
-        f"În data de {report_date}, s-au constatat {nr_of_deviations} abateri, "
-        f"dintre care {','.join(consecutive_deviations)} consecutive în intervalele orare {', '.join(deviation_interval)}"
-        f" cu următoarele cauze: {all_reasons}, pentru care s-au aplicat "
-        f"următoarele acțiuni corective: {all_actions}"
+        f"În data de {report_date}, {deviation_message}, "
+        f"dintre care {','.join(deviation_group_sizes)} consecutive în intervalele orare {', '.join(deviation_intervals)}"
+        f" cu următoarele cauze: {', '.join(all_reasons)}, pentru care s-au aplicat "
+        f"următoarele acțiuni corective: {', '.join(all_actions)}"
     )
 
 
@@ -251,8 +174,8 @@ def load_archived_report(col_widths, report_data):
         temperature, timestamp, reason, action = report_data
         timestamp = parse(timestamp).strftime('%H:%M')
 
-        reason_options = [reason] if reason != 'fara abatere' else []
-        action_options = [action] if action != 'fara actiune' else []
+        reason_options = [reason]
+        action_options = [action]
         if float(temperature) > dev_max_limit:
             markdown_temp = f':red[{temperature}]'
             reason_options.extend(
