@@ -31,6 +31,12 @@ def load_general_css() -> None:
         .stSelectbox label{
          display: none;
         }
+        @media (max-width: 800px) {
+          .stHorizontalBlock {
+            width: 25vw;
+            flex-wrap: no-wrap;
+          }
+        }
         </style>''', unsafe_allow_html=True)
     load_calendar_css()
 

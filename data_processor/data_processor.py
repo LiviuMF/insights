@@ -58,8 +58,16 @@ def build_report_summary(
         previous_hour_data = data
 
 
+    deviation_intervals = [
+        f'{d[0][1].split(':')[0]} <-> {d[-1][1].split(':')[0]}'
+        for d in all_hours
+    ]
+    deviation_group_sizes = [str(len(d)) for d in all_hours]
     if not all_hours:
         all_hours = list(k for k, _ in itertools.groupby(consecutive_segment))
+        deviation_intervals = [x[1].split(':')[0] for x in all_hours]
+        deviation_intervals = [f'{deviation_intervals[-1]} <-> {deviation_intervals[0]}']
+        deviation_group_sizes = [str(len(all_hours))]
 
     report_date = report[0]['date']
     nr_of_deviations = len([x for x in report_data if x[2] != 'fara abatere'])
@@ -70,11 +78,6 @@ def build_report_summary(
     )
     all_reasons = set(x[2] for x in report_data if x[2] != 'fara abatere')
     all_actions = set(x[3] for x in report_data if x[2] != 'fara actiune')
-    deviation_group_sizes = [str(len(d)) for d in all_hours]
-    deviation_intervals = [
-        f'{d[0][1].split(':')[0]} <-> {d[-1][1].split(':')[0]}' 
-        for d in all_hours
-    ]
 
     return (
         f"În data de {report_date}, {deviation_message}, "
@@ -213,6 +216,12 @@ def load_archived_report(col_widths, report_data):
 
 
 def build_new_report(col_widths: list, df: pd.DataFrame) -> list:
+    header_time, header_temp, header_reason, header_action = st.columns(col_widths)
+    header_time.text('Ora')
+    header_temp.text('Temperatura')
+    header_reason.text('Abatere')
+    header_action.text('Actiune')
+
     device_data = st.session_state['device_data']
     dev_max_limit = device_data['dev_max_accepted_temp']
     dev_id = device_data['id']
