@@ -80,10 +80,8 @@ def build_report_summary(
     all_actions = set(x[3] for x in report_data if x[2] != 'fara actiune')
 
     return (
-        f"In data de {report_date}, {deviation_message}, "
-        f"dintre care {','.join(deviation_group_sizes)} consecutive in intervalele orare {', '.join(deviation_intervals)}"
-        f" cu urmatoarele cauze: {', '.join(all_reasons)}, pentru care s-au aplicat "
-        f"urmatoarele actiuni corective: {', '.join(all_actions)}"
+        f"In data de {report_date}, {deviation_message}, dintre care {','.join(deviation_group_sizes)} consecutive in intervalele orare {', '.join(deviation_intervals)}"
+        f"\nS-au inregistrat urmatoarele cauze si actiuni corective:\n-cauze: {', '.join(all_reasons)}\n-actiuni corective: {', '.join(all_actions)}"
     )
 
 
@@ -115,19 +113,7 @@ def generate_pdf(
     if report_summary:
         page.insert_text(
             (left_margin - 65, 130),
-            report_summary.split('in intervalele')[0],
-            fontsize=font_size,
-            color=color
-        )
-        page.insert_text(
-            (left_margin - 68, 145),
-            report_summary.split('consecutive')[1].split('pentru care')[0],
-            fontsize=font_size,
-            color=color
-        )
-        page.insert_text(
-            (left_margin - 65, 160),
-            f'pentru care {report_summary.split('pentru care')[1]}',
+            report_summary,
             fontsize=font_size,
             color=color
         )
@@ -154,8 +140,8 @@ def generate_pdf(
     for index, row in enumerate(report_data):
         temp, time, deviation, action = row
         vertical = 242 + (index * row_height)
-        temp_horizontal = 42
-        time_horizontal = 97
+        temp_horizontal = 97
+        time_horizontal = 42
         deviation_horizontal = 200
         action_horizontal = 430
 
