@@ -69,9 +69,9 @@ def load_haccp_report() -> None:
                 f'cel mai recent la data: {reports_in_last_7_days[0]}'
             )
         else:
-            report_message = f'<p class="noReports">⚠️Nu exista rapoarte generate in ultimele 7 zile ⚠️</p>'
+            report_message = f'⚠️Nu exista rapoarte generate in ultimele 7 zile ⚠️'
     else:
-        report_message = f'<p class="noReports">⚠️Nu exista rapoarte generate ⚠️</p>'
+        report_message = f'⚠️Nu exista rapoarte generate ⚠️'
     st.text(report_message)
     report_summary = ''
     if reports:
