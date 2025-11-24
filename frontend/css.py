@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 import streamlit as st
 
+import utils
 
 
 def load_general_css() -> None:
@@ -11,10 +12,13 @@ def load_general_css() -> None:
         .stAppDeployButton, #MainMenu{
             display: None;
         }
-    
+        .noReports{
+          # border: solid 3px red;
+          color: red;
+        }
         .stImage {
           position: fixed;
-          top: 40px;
+          bottom: 40px;
           right: 40px;
           z-index: 999999 !important;
         }
@@ -74,8 +78,8 @@ def load_calendar_css() -> None:
             'dev_eui': dev_id
         }
     )
-
     report_days = [r['date'] for r in report_response.json()['results']]
+    utils.save_to_session_state(reports=report_days)
     all_style = ''
     for r_day in report_days:
         verbose_date = format_date_verbose(r_day)

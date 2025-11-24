@@ -19,7 +19,6 @@ def fetch_devices():
                 st.session_state['password']
             ))
         devices = response.json()['results']
-        st.image('media/lemongras.png', width=80)
         DEV_ID_MAPPING = {}
         DEV_NAME_MAPPING = {}
         for device in devices:

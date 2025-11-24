@@ -13,6 +13,7 @@ import streamlit as st
 
 def load_sidebar():
     if st.session_state['is_authenticated']:
+        st.sidebar.image('media/lemongras.png', width=90)
         dev_names = st.session_state['devices']
         if selected_device := st.sidebar.selectbox(
                 'Selecteaza dispozitiv',
@@ -47,6 +48,31 @@ def load_haccp_report() -> None:
     col_widths = [2.5, 4, 6, 6]
 
     st.subheader('Generare raport HACCP')
+    all_reports = st.session_state['reports']
+
+    if all_reports:
+        seven_days_ago_date_str = utils.days_ago(7).date().isoformat()
+        reports_in_last_7_days = [
+            report_date
+            for report_date in all_reports
+            if report_date > seven_days_ago_date_str
+        ]
+        if reports_in_last_7_days:
+            generated_reports_text_ro = (
+                'rapoarte generate'
+                if len(reports_in_last_7_days) > 1
+                else 'raport generat'
+            )
+            report_message = (
+                f'💡 Exista {len(reports_in_last_7_days)} '
+                f'{generated_reports_text_ro} in ultimele 7 zile, '
+                f'cel mai recent la data: {reports_in_last_7_days[0]}'
+            )
+        else:
+            report_message = f'<p class="noReports">⚠️Nu exista rapoarte generate in ultimele 7 zile ⚠️</p>'
+    else:
+        report_message = f'<p class="noReports">⚠️Nu exista rapoarte generate ⚠️</p>'
+    st.text(report_message)
     report_summary = ''
     if reports:
         report_summary = dp.build_report_summary(reports)
