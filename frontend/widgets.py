@@ -23,7 +23,7 @@ def load_sidebar():
 
         if selected_date := st.sidebar.date_input(
                 'Selecteaza data',
-                max_value=utils.TODAY
+                max_value=utils.get_today()
         ):
             utils.save_to_session_state(selected_date=selected_date)
         css.load_calendar_css()

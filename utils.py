@@ -3,7 +3,9 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 
-TODAY = datetime.today()
+
+def get_today():
+    return datetime.today()
 
 
 def save_to_session_state(**kwargs):
@@ -18,4 +20,4 @@ def load_device_data() -> None:
 
 
 def days_ago(nr_of_days: int) -> datetime:
-    return TODAY - timedelta(nr_of_days)
+    return get_today() - timedelta(nr_of_days)
