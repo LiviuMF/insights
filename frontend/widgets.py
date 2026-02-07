@@ -1,3 +1,5 @@
+from dateutil import parser
+from datetime import datetime
 from functools import partial
 
 import config
@@ -156,11 +158,37 @@ def load_temp_interval_change() -> None:
                             'temp_interval': config.COOLING_MAPPER[cooling_type]
                         },
                         device_id=dev_name_mapping[device]['id'],
-                        username=st.session_state['username'],
-                        password=st.session_state['password']
                     )
                     st.sidebar.success('Modificari salvate cu succes!')
                 except:
                     st.sidebar.error(f'A aparut o eroare la salvare')
 
+
+def load_device_notification_change() -> None:
+    device = st.session_state['selected_device']
+    dev_name_mapping = st.session_state['dev_name_mapping']
+    stop_notification_until_date = parser.parse(dev_name_mapping[device]['dev_stop_notification_until'])
+
+    if st.sidebar.checkbox('Modifica notificari'):
+        if stop_notification_until_date > utils.get_current_datetime():
+            st.sidebar.warning(
+                f'Notificatiri oprite pana la:\n{stop_notification_until_date.date().isoformat()} {stop_notification_until_date.time().isoformat()}'
+            )
+        _date = st.sidebar.date_input('Selecteaza data')
+        _time = st.sidebar.time_input("Selecteaza ora", value="now")
+
+        if _date and _time:
+            if st.sidebar.button('Salveaza'):
+                try:
+                    dp.update_device_by_id(
+                        device_data={
+                            'dev_stop_notification_until': datetime.combine(_date, _time).isoformat()
+                        },
+                        device_id=dev_name_mapping[device]['id'],
+                    )
+                    st.sidebar.success('Modificari salvate cu succes!')
+                except:
+                    st.sidebar.error(f'A aparut o eroare la salvare')
+        else:
+            st.warning('Selecteaza data si ora')
 

@@ -19,10 +19,10 @@ def remove_duplicates_by_hour(df: pd.DataFrame) -> pd.DataFrame:
 def update_device_by_id(
         device_data: dict,
         device_id: str,
-        username: str,
-        password: str
 ) -> None:
     try:
+        username = st.session_state['username']
+        password = st.session_state['password']
         requests.patch(
             url=f'{config.API_URL}/api/devices/{device_id}/',
             auth=(username, password),

@@ -8,6 +8,10 @@ def get_today():
     return datetime.today()
 
 
+def get_current_datetime():
+    return datetime.now()
+
+
 def save_to_session_state(**kwargs):
     for k, v in kwargs.items():
         st.session_state[k] = v
