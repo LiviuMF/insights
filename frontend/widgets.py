@@ -170,6 +170,7 @@ def load_device_notification_change() -> None:
     stop_notification_until_date = parser.parse(dev_name_mapping[device]['dev_stop_notification_until'])
 
     if st.sidebar.checkbox('Modifica notificari'):
+        st.sidebar.text('Opreste notificarile pana la:')
         if stop_notification_until_date > utils.get_current_datetime():
             st.sidebar.warning(
                 f'Notificatiri oprite pana la:\n{stop_notification_until_date.date().isoformat()} {stop_notification_until_date.time().isoformat()}'
