@@ -59,7 +59,7 @@ def build_report_summary(
 
 
     deviation_intervals = [
-        f'{d[0][1].split(':')[0]} <-> {d[-1][1].split(':')[0]}'
+        f"{d[0][1].split(':')[0]} <-> {d[-1][1].split(':')[0]}"
         for d in all_hours
     ]
     deviation_group_sizes = [str(len(d)) for d in all_hours]
