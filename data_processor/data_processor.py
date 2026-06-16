@@ -63,6 +63,8 @@ def build_report_summary(
         for d in all_hours
     ]
     deviation_group_sizes = [str(len(d)) for d in all_hours]
+    if not deviation_intervals:
+        return "Nu exista suficiente citiri"
     if not all_hours:
         all_hours = list(k for k, _ in itertools.groupby(consecutive_segment))
         deviation_intervals = [x[1].split(':')[0] for x in all_hours]
