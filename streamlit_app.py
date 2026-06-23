@@ -11,7 +11,7 @@ load_authentication_module()
 
 if st.session_state['is_authenticated']:
     api.fetch_devices()
-    if 'selected_device' not in st.session_state:
+    if 'devices' not in st.session_state:
         st.sidebar.warning('Nu exista deviceuri pentru acest user')
     else:
         fe.load_sidebar()
