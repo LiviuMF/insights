@@ -125,7 +125,8 @@ def load_haccp_report() -> None:
         st.session_state['user_data'],
         report_date_value,
         report_summary,
-        [dev_min_limit, dev_max_limit]
+        [dev_min_limit, dev_max_limit],
+        device_data['dev_cooling_type'],
     )
     st.download_button(
         f'Descarca {report_type}',
@@ -138,25 +139,25 @@ def load_haccp_report() -> None:
 def load_temp_interval_change() -> None:
     dev_name_mapping = st.session_state['dev_name_mapping']
     device = st.session_state['selected_device']
+    cooling_type = dev_name_mapping[device]['dev_cooling_type']
     if st.sidebar.checkbox('Modifica tipul de incadrare'):
-        cooling_type = st.sidebar.selectbox(
+        selected_cooling_type = st.sidebar.selectbox(
             label='hidden cooling type',
             label_visibility='collapsed',
             key='modify_cooling_type',
-            options=(
-                'refrigerare (carne / organe)',
-                'refrigerare (mezeluri / lactate)',
-                'refrigerare (fructe / legume)',
-                'congelare'
-            )
+            options=[cooling_type] + [
+                ct
+                for ct in config.COOLING_MAPPER.keys()
+                if ct != cooling_type
+            ] # set order of the cooling type starting with the existing one
         )
         if st.sidebar.button('Salveaza modificari'):
-            if cooling_type:
+            if selected_cooling_type:
                 try:
                     dp.update_device_by_id(
                         device_data={
-                            'temp_interval': config.COOLING_MAPPER[cooling_type],
-                            'dev_cooling_type': cooling_type
+                            'temp_interval': config.COOLING_MAPPER[selected_cooling_type],
+                            'dev_cooling_type': selected_cooling_type
                         },
                         device_id=dev_name_mapping[device]['id'],
                     )

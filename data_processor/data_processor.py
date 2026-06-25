@@ -93,19 +93,11 @@ def generate_pdf(
         user_data: dict,
         report_date: str,
         report_summary: str,
-        dev_limits: list
+        dev_limits: list,
+        cooling_type: str,
 ):
     first_last_name = f'{user_data["first_name"]} {user_data["last_name"]}'
     template_pdf = pymupdf.open("media/pdf_template_haccp.pdf")
-    cooling_type = [
-        cool_type
-        for cool_type, temp_limits in config.COOLING_MAPPER.items()
-        if temp_limits == dev_limits
-    ]
-    if cooling_type:
-        cooling_type = cooling_type[0]
-    else:
-        cooling_type = list(config.COOLING_MAPPER.keys())[0]
 
     color = (0, 0, 0) # black
     font_size = 12
@@ -132,7 +124,7 @@ def generate_pdf(
         color=color
     )
     min_temp, max_temp = dev_limits
-    temp_limits_text = f'{min_temp}..{max_temp}' if not cooling_type == 'congelare' else min_temp
+    temp_limits_text = f'{min_temp}..{max_temp}'
     page.insert_text((left_margin + 23, 94), f'{temp_limits_text}', fontsize=font_size, color=color)
     page.insert_text((left_margin + 300, 94), cooling_type, fontsize=font_size, color=color)
     page.insert_text((left_margin + 355, 745), first_last_name, fontsize=font_size, color=color)
