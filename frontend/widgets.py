@@ -155,7 +155,8 @@ def load_temp_interval_change() -> None:
                 try:
                     dp.update_device_by_id(
                         device_data={
-                            'temp_interval': config.COOLING_MAPPER[cooling_type]
+                            'temp_interval': config.COOLING_MAPPER[cooling_type],
+                            'dev_cooling_type': cooling_type
                         },
                         device_id=dev_name_mapping[device]['id'],
                     )
