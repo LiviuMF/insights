@@ -228,7 +228,9 @@ def build_new_report(col_widths: list, df: pd.DataFrame) -> list:
     dev_id = device_data['id']
 
     readings_df = remove_duplicates_by_hour(df)
+    readings_df = replace_device_reading_if_probe_unavailable(readings_df)
     haccp_report = readings_df[['tempc_ds', 'timestamp']]
+
     report_data = []
     for index, row in haccp_report.iterrows():
         time_col, temp_col, reason_col, action_col = st.columns(col_widths)
@@ -266,3 +268,9 @@ def build_new_report(col_widths: list, df: pd.DataFrame) -> list:
         time_col.markdown(timestamp)
 
     return report_data
+
+
+def replace_device_reading_if_probe_unavailable(df: pd.DataFrame) -> pd.DataFrame:
+    # 327.67 value given by device if probe is missing
+    df.loc[df['tempc_ds'] == 327.67, 'tempc_ds'] = df['tempc_sht']
+    return df
